@@ -25,6 +25,9 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
+
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
@@ -54,6 +57,8 @@ public final class WordCountDemo {
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+//        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long().getClass().getName());
+
 
         // setting offset reset to earliest so that we can re-run the demo code with the same pre-loaded data
         // Note: To re-run the demo, you need to use the offset reset tool:
@@ -70,8 +75,15 @@ public final class WordCountDemo {
             .groupBy((key, value) -> value)
             .count();
 
+//        final String queryableStoreName = counts.queryableStoreName(); // returns null if KTable is not queryable
+//        ReadOnlyKeyValueStore view = counts.toStream().store(queryableStoreName, QueryableStoreTypes.keyValueStore());
+//        for (String key : counts.)
+//        System.out.println(counts.print());
+
         // need to override value serde to Long type
         counts.toStream().to(OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.Long()));
+//        counts.toStream().to(OUTPUT_TOPIC);
+
     }
 
     public static void main(final String[] args) {
@@ -81,6 +93,8 @@ public final class WordCountDemo {
         createWordCountStream(builder);
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
+
+        System.out.println(builder.build().describe());
 
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {

@@ -55,6 +55,9 @@ public class PipeDemo {
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);
 
+        System.out.println("Description: ");
+        System.out.println(builder.build().describe());
+
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-pipe-shutdown-hook") {
             @Override
@@ -64,7 +67,10 @@ public class PipeDemo {
             }
         });
 
+
+
         try {
+            System.out.println("Starting");
             streams.start();
             latch.await();
         } catch (final Throwable e) {
