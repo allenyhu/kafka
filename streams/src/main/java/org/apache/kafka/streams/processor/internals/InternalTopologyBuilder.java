@@ -123,7 +123,7 @@ public class InternalTopologyBuilder {
 
     private Map<Integer, Set<String>> nodeGroups = null;
 
-    private Set<String> sourceNodes = new HashSet<String>();
+    private final Set<String> sourceNodes = new HashSet<String>();
 
     public static class StateStoreFactory {
         private final StoreBuilder builder;
@@ -1906,4 +1906,35 @@ public class InternalTopologyBuilder {
     public synchronized Map<String, StateStoreFactory> stateStores() {
         return stateFactories;
     }
+
+    // private String generateSourceSerilization(String name){
+    // }
+
+    // public Set<String> serializeTopology() {
+    //     Set<String> res = new HashSet();
+    //     TopologyDescription desc = this.describe();
+    //     for(String currSource : sourceNodes) {
+    //         res.add(generateSourceSerilization(currSource));
+    //     }
+    //     return res;
+    // }
+
+    // public TopologyDescription describe() {
+    //     final TopologyDescription description = new TopologyDescription();
+
+    //     for (final Map.Entry<Integer, Set<String>> nodeGroup : makeNodeGroups().entrySet()) {
+
+    //         final Set<String> allNodesOfGroups = nodeGroup.getValue();
+    //         final boolean isNodeGroupOfGlobalStores = nodeGroupContainsGlobalSourceNode(allNodesOfGroups);
+
+    //         if (!isNodeGroupOfGlobalStores) {
+    //             describeSubtopology(description, nodeGroup.getKey(), allNodesOfGroups);
+    //         } else {
+    //             describeGlobalStore(description, allNodesOfGroups, nodeGroup.getKey());
+    //         }
+    //     }
+
+    //     return description;
+    // }
+
 }
