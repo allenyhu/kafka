@@ -21,6 +21,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
@@ -68,8 +69,9 @@ public final class WordCountDemo {
     }
 
     static void createWordCountStream(final StreamsBuilder builder) {
-        final KStream<String, String> source = builder.stream(INPUT_TOPIC);
+//        builder.build().addSource("ISNAME", INPUT_TOPIC);
 
+        final KStream<String, String> source = builder.stream(INPUT_TOPIC);
         final KTable<String, Long> counts = source
             .flatMapValues(value -> Arrays.asList(value.toLowerCase(Locale.getDefault()).split(" ")))
             .groupBy((key, value) -> value)
@@ -82,8 +84,10 @@ public final class WordCountDemo {
 
         // need to override value serde to Long type
         counts.toStream().to(OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.Long()));
-//        counts.toStream().to(OUTPUT_TOPIC);
+        counts.toStream().to("NEW TOPIC");
 
+//        counts.toStream().to(OUTPUT_TOPIC);
+//
     }
 
     public static void main(final String[] args) {
@@ -91,10 +95,11 @@ public final class WordCountDemo {
 
         final StreamsBuilder builder = new StreamsBuilder();
         createWordCountStream(builder);
-        final KafkaStreams streams = new KafkaStreams(builder.build(), props);
+        Topology t = builder.build();
+        final KafkaStreams streams = new KafkaStreams(t, props);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        System.out.println(builder.build().describe());
+        System.out.println(t.describe());
 
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {

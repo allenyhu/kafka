@@ -20,6 +20,7 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.TopologyDescription;
 import org.apache.kafka.streams.errors.TopologyException;
 import org.apache.kafka.streams.processor.ProcessorSupplier;
 import org.apache.kafka.streams.processor.StateStore;
@@ -1353,9 +1354,15 @@ public class InternalTopologyBuilder {
             }
         }
 
-        description.addSubtopology(new Subtopology(
+        //TODO ERASE AFTER TEST
+        Subtopology temp = new Subtopology(
                 subtopologyId,
-                new HashSet<>(nodesByName.values())));
+                new HashSet<>(nodesByName.values()));
+
+        System.out.println(temp.id);
+        System.out.println(temp.sinkNodesMap.toString());
+
+        description.addSubtopology(temp);
     }
 
     public final static class GlobalStore implements TopologyDescription.GlobalStore {
@@ -1641,11 +1648,14 @@ public class InternalTopologyBuilder {
     public final static class Subtopology implements org.apache.kafka.streams.TopologyDescription.Subtopology {
         private final int id;
         private final Set<TopologyDescription.Node> nodes;
+        public final Map<String, String> sinkNodesMap;
 
         public Subtopology(final int id, final Set<TopologyDescription.Node> nodes) {
             this.id = id;
             this.nodes = new TreeSet<>(NODE_COMPARATOR);
             this.nodes.addAll(nodes);
+            this.sinkNodesMap = new HashMap<String, String>();
+            findSinkNodes();
         }
 
         @Override
@@ -1695,6 +1705,15 @@ public class InternalTopologyBuilder {
         @Override
         public int hashCode() {
             return Objects.hash(id, nodes);
+        }
+
+        private void findSinkNodes(){
+            Iterator<TopologyDescription.Node> it = this.nodes.iterator();
+            while(it.hasNext()){
+                TopologyDescription.Node node = it.next();
+                if(node instanceof TopologyDescription.Sink)
+                    sinkNodesMap.put(node.name(), ((org.apache.kafka.streams.TopologyDescription.Sink) node).topic());
+            }
         }
     }
 
