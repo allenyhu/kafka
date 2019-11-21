@@ -1248,6 +1248,10 @@ public class InternalTopologyBuilder {
     public TopologyDescription describe() {
         final TopologyDescription description = new TopologyDescription();
 
+        // TODO: remove after done testing
+        System.out.println("testing");
+        System.out.println(this.sourceNodes.toString());
+
         for (final Map.Entry<Integer, Set<String>> nodeGroup : makeNodeGroups().entrySet()) {
 
             final Set<String> allNodesOfGroups = nodeGroup.getValue();
