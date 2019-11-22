@@ -1249,10 +1249,6 @@ public class InternalTopologyBuilder {
     public TopologyDescription describe() {
         final TopologyDescription description = new TopologyDescription();
 
-        // TODO: remove after done testing
-        System.out.println("testing");
-        System.out.println(this.sourceNodes.toString());
-
         for (final Map.Entry<Integer, Set<String>> nodeGroup : makeNodeGroups().entrySet()) {
 
             final Set<String> allNodesOfGroups = nodeGroup.getValue();
@@ -1264,9 +1260,6 @@ public class InternalTopologyBuilder {
                 describeGlobalStore(description, allNodesOfGroups, nodeGroup.getKey());
             }
         }
-
-        System.out.println("HERE");
-        linkSubtopology(description.subtopologies);
 
         return description;
     }
@@ -1357,15 +1350,9 @@ public class InternalTopologyBuilder {
             }
         }
 
-        //TODO ERASE AFTER TEST
-        Subtopology temp = new Subtopology(
+        description.addSubtopology(new Subtopology(
                 subtopologyId,
-                new HashSet<>(nodesByName.values()));
-
-        System.out.println(temp.id);
-        System.out.println(temp.sinkNodesMap.toString());
-
-        description.addSubtopology(temp);
+                new HashSet<>(nodesByName.values())));
     }
 
     public final static class GlobalStore implements TopologyDescription.GlobalStore {
@@ -1945,7 +1932,7 @@ public class InternalTopologyBuilder {
         Map<String, Set<Integer>> topologySourceTopicsMap = createTopicsTopologyMap(all);
         HashMap<Integer, Map<String, Set<Integer>>> subtopologyLinkMap = new HashMap<>();
 
-        System.out.println(topologySourceTopicsMap.toString());
+//        System.out.println(topologySourceTopicsMap.toString());
 
         while(subtopologyIterator.hasNext()) {
             Subtopology currSub = (Subtopology) subtopologyIterator.next();
@@ -1962,7 +1949,9 @@ public class InternalTopologyBuilder {
                 }
             }
         }
-        System.out.println(subtopologyLinkMap.toString());
+
+//        System.out.println(subtopologyLinkMap.toString());
+
         return subtopologyLinkMap;
     }
 
@@ -1976,6 +1965,7 @@ public class InternalTopologyBuilder {
 
             for (String topic : topics) {
                 Set<Integer> topologies = topicsMap.get(topic);
+                // TODO: Check best practice on this
                 if (topologies == null) {
                     topologies = new HashSet<>();
                     topologies.add(currSub.id());
@@ -1988,34 +1978,63 @@ public class InternalTopologyBuilder {
 
         return topicsMap;
     }
-    // private String generateSourceSerilization(String name){
-    // }
 
-    // public Set<String> serializeTopology() {
-    //     Set<String> res = new HashSet();
-    //     TopologyDescription desc = this.describe();
-    //     for(String currSource : sourceNodes) {
-    //         res.add(generateSourceSerilization(currSource));
-    //     }
-    //     return res;
-    // }
+    public Set<String> testSerialize() {
+        TopologyDescription topDesc = describe();
+        HashMap<Integer, Map<String, Set<Integer>>> linkedTop = linkSubtopology(topDesc.subtopologies);
+        Map<Integer, TopologyDescription.Subtopology> subtopologyIDMap = new HashMap<>();
+        Set<String> serialization = new HashSet<>();
+        Iterator<TopologyDescription.Subtopology> it = topDesc.subtopologies.iterator();
+        while (it.hasNext()) {
+            TopologyDescription.Subtopology currSubTop = it.next();
+            subtopologyIDMap.put(currSubTop.id(), currSubTop);
+        }
 
-    // public TopologyDescription describe() {
-    //     final TopologyDescription description = new TopologyDescription();
+        for(Map.Entry<Integer, Map<String, Set<Integer>>> currSubTop : linkedTop.entrySet()){
+            serialization.add(traverseTopology(currSubTop.getKey(), linkedTop, topDesc.subtopologies, subtopologyIDMap));
+        }
 
-    //     for (final Map.Entry<Integer, Set<String>> nodeGroup : makeNodeGroups().entrySet()) {
+        return serialization;
+    }
 
-    //         final Set<String> allNodesOfGroups = nodeGroup.getValue();
-    //         final boolean isNodeGroupOfGlobalStores = nodeGroupContainsGlobalSourceNode(allNodesOfGroups);
+    private String traverseTopology(Integer topologyID, Map<Integer, Map<String, Set<Integer>>> linkedTop, TreeSet<TopologyDescription.Subtopology> all,
+                                    Map<Integer, TopologyDescription.Subtopology> idToSub){
 
-    //         if (!isNodeGroupOfGlobalStores) {
-    //             describeSubtopology(description, nodeGroup.getKey(), allNodesOfGroups);
-    //         } else {
-    //             describeGlobalStore(description, allNodesOfGroups, nodeGroup.getKey());
-    //         }
-    //     }
+        System.out.println(topologyID);
+        TopologyDescription.Subtopology topology = idToSub.get(topologyID);
+        if(linkedTop.get(topologyID) == null){
+            return traverseInternalTopolgy(((Subtopology) topology).sourceNode(), "", false);
+        }
 
-    //     return description;
-    // }
+        String allChildSerialization = "";
+        for(Map.Entry<String, Set<Integer>> child : linkedTop.get(topologyID).entrySet()){
+            for(Integer childID : child.getValue()){
+                allChildSerialization += traverseTopology(childID, linkedTop, all, idToSub);
+            }
+        }
+
+        String internalSerialization = traverseInternalTopolgy(((Subtopology) topology).sourceNode(), allChildSerialization,true);
+
+        System.out.println("Internal: " + internalSerialization);
+        System.out.println("Child: " + allChildSerialization);
+        return internalSerialization;
+    }
+
+    private String traverseInternalTopolgy(TopologyDescription.Node node, String childSubtopologySerilization, boolean isLinked) {
+
+        if(node.successors().isEmpty()) {
+            if (isLinked) return childSubtopologySerilization;
+
+            return "0" + childSubtopologySerilization + "1";
+        }
+
+        String allChildSerialization = "";
+        Iterator<TopologyDescription.Node> it = node.successors().iterator();
+        while (it.hasNext()) {
+            TopologyDescription.Node child = it.next();
+            allChildSerialization += traverseInternalTopolgy(child, childSubtopologySerilization, isLinked);
+        }
+        return "0" + allChildSerialization + "1";
+    }
 
 }

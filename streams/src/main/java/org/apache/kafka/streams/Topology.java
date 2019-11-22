@@ -34,6 +34,7 @@ import org.apache.kafka.streams.processor.internals.SinkNode;
 import org.apache.kafka.streams.processor.internals.SourceNode;
 import org.apache.kafka.streams.state.StoreBuilder;
 
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -769,4 +770,5 @@ public class Topology {
     public synchronized TopologyDescription describe() {
         return internalTopologyBuilder.describe();
     }
+    public Set<String> serialize() {return internalTopologyBuilder.testSerialize();}
 }

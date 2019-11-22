@@ -100,6 +100,7 @@ public final class WordCountDemo {
         final CountDownLatch latch = new CountDownLatch(1);
 
         System.out.println(t.describe());
+        System.out.println(t.serialize().toString());
 
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {
