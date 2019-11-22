@@ -1265,6 +1265,9 @@ public class InternalTopologyBuilder {
             }
         }
 
+        System.out.println("HERE");
+        linkSubtopology(description.subtopologies);
+
         return description;
     }
 
@@ -1649,12 +1652,14 @@ public class InternalTopologyBuilder {
         private final int id;
         private final Set<TopologyDescription.Node> nodes;
         public final Map<String, String> sinkNodesMap;
+        public final TopologyDescription.Node sourceNode;
 
         public Subtopology(final int id, final Set<TopologyDescription.Node> nodes) {
             this.id = id;
             this.nodes = new TreeSet<>(NODE_COMPARATOR);
             this.nodes.addAll(nodes);
-            this.sinkNodesMap = new HashMap<String, String>();
+            this.sourceNode = this.nodes.iterator().next();
+            this.sinkNodesMap = new HashMap<>();
             findSinkNodes();
         }
 
@@ -1712,9 +1717,10 @@ public class InternalTopologyBuilder {
             while(it.hasNext()){
                 TopologyDescription.Node node = it.next();
                 if(node instanceof TopologyDescription.Sink)
-                    sinkNodesMap.put(node.name(), ((org.apache.kafka.streams.TopologyDescription.Sink) node).topic());
+                    sinkNodesMap.put(((org.apache.kafka.streams.TopologyDescription.Sink) node).topic(), node.name());
             }
         }
+
     }
 
     public static class TopicsInfo {
@@ -1928,6 +1934,47 @@ public class InternalTopologyBuilder {
 
     public synchronized Map<String, StateStoreFactory> stateStores() {
         return stateFactories;
+    }
+
+    public HashMap<Integer, Map<String, Integer>> linkSubtopology(TreeSet<TopologyDescription.Subtopology> all) {
+        Iterator<TopologyDescription.Subtopology> it1 = all.iterator();
+
+        HashMap<Integer, Map<String, Integer>> res = new HashMap<>();
+        HashMap<Integer, Set<String>> subtopologyTopics = new HashMap<>();
+
+        while(it1.hasNext()) {
+            Subtopology currSub = ((Subtopology) it1.next());
+            subtopologyTopics.put(currSub.id, ((TopologyDescription.Source) currSub.sourceNode).topicSet());
+        }
+
+        it1 = all.iterator();
+        while(it1.hasNext()) {
+            Subtopology currSub = ((Subtopology) it1.next());
+            Map<String, String> currSinkTopics = currSub.sinkNodesMap;
+            for(Map.Entry<String,String> currTopic : currSinkTopics.entrySet()){
+                
+                res.put(currSub.id, )
+            }
+        }
+
+//        while(it1.hasNext()){
+//            Iterator<Subtopology> it2 = all.iterator();
+//            Subtopology sub1 = it1.next();
+////            TopologyDescription.Node source1 = sub1.sourceNode;
+//            Map<String,String> sinks1 = sub1.sinkNodesMap;
+//            while(it2.hasNext()){
+//                if(it2 == it1) continue;
+//                Subtopology sub2 = it2.next();
+//                TopologyDescription.Node source2 = sub2.sourceNode;
+////                Map<String,String> sink2 = sub2.sinkNodesMap;
+//                for(String sourceTopic : ((TopologyDescription.Source) source2).topicSet()){
+//                    if(sinks1.get(sourceTopic) != null){
+//                        res.get(sub1.id).add(sub2.id);
+//                    }
+//                }
+//            }
+//        }
+        return res;
     }
 
     // private String generateSourceSerilization(String name){
