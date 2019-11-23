@@ -21,6 +21,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
 
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
@@ -57,6 +58,11 @@ public class PipeDemo {
 
         System.out.println("Description: ");
         System.out.println(builder.build().describe());
+        Topology temp = builder.build();
+        System.out.println(temp.serialize().toString());
+
+//        System.out.print(temp.isIsomorphic(temp));
+
 
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-pipe-shutdown-hook") {

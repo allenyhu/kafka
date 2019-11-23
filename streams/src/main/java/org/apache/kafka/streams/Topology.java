@@ -16,6 +16,7 @@
  */
 package org.apache.kafka.streams;
 
+import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.streams.errors.TopologyException;
@@ -34,8 +35,10 @@ import org.apache.kafka.streams.processor.internals.SinkNode;
 import org.apache.kafka.streams.processor.internals.SourceNode;
 import org.apache.kafka.streams.state.StoreBuilder;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 
 /**
  * A logical representation of a {@link ProcessorTopology}.
@@ -771,4 +774,25 @@ public class Topology {
         return internalTopologyBuilder.describe();
     }
     public Set<String> serialize() {return internalTopologyBuilder.testSerialize();}
+    public Boolean isIsomorphic(Topology toCompare){
+        Set<String> serial1 = this.serialize();
+        Set<String> serial2 = toCompare.serialize();
+        System.out.println(serial1.toString());
+        System.out.println(serial2.toString());
+        Set<String> sorted1 = new HashSet<>();
+        Set<String> sorted2 = new HashSet<>();
+        for(String currS : serial1) {
+            char[] chars = currS.toCharArray();
+            Arrays.sort(chars);
+            sorted1.add(new String(chars));
+        }
+        for(String currS : serial2) {
+            char[] chars = currS.toCharArray();
+            Arrays.sort(chars);
+            sorted2.add(new String(chars));
+        }
+        System.out.println(sorted1.toString());
+        System.out.println(sorted2.toString());
+        return sorted1.equals(sorted2);
+    }
 }

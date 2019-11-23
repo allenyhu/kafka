@@ -1993,14 +1993,13 @@ public class InternalTopologyBuilder {
         for(Map.Entry<Integer, Map<String, Set<Integer>>> currSubTop : linkedTop.entrySet()){
             serialization.add(traverseTopology(currSubTop.getKey(), linkedTop, topDesc.subtopologies, subtopologyIDMap));
         }
-
+        System.out.println(linkedTop.toString());
         return serialization;
     }
 
     private String traverseTopology(Integer topologyID, Map<Integer, Map<String, Set<Integer>>> linkedTop, TreeSet<TopologyDescription.Subtopology> all,
                                     Map<Integer, TopologyDescription.Subtopology> idToSub){
 
-        System.out.println(topologyID);
         TopologyDescription.Subtopology topology = idToSub.get(topologyID);
         if(linkedTop.get(topologyID) == null){
             return traverseInternalTopolgy(((Subtopology) topology).sourceNode(), "", false);

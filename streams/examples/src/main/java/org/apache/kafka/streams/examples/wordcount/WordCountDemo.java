@@ -101,6 +101,8 @@ public final class WordCountDemo {
 
         System.out.println(t.describe());
         System.out.println(t.serialize().toString());
+        System.out.println(t.isIsomorphic(t));
+
 
         // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-wordcount-shutdown-hook") {
