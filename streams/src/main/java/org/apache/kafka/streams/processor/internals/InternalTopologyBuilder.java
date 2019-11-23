@@ -1932,12 +1932,18 @@ public class InternalTopologyBuilder {
         Map<String, Set<Integer>> topologySourceTopicsMap = createTopicsTopologyMap(all);
         HashMap<Integer, Map<String, Set<Integer>>> subtopologyLinkMap = new HashMap<>();
 
-//        System.out.println(topologySourceTopicsMap.toString());
+        System.out.println(topologySourceTopicsMap.toString());
+        Set<Integer> notLinkedTopologies = new HashSet<>();
+        while(subtopologyIterator.hasNext()) {
+            Subtopology currSub = (Subtopology) subtopologyIterator.next();
+            notLinkedTopologies.add(currSub.id());
+        }
+
+        subtopologyIterator = all.iterator();
 
         while(subtopologyIterator.hasNext()) {
             Subtopology currSub = (Subtopology) subtopologyIterator.next();
             Map<String, String> sinkTopics = currSub.sinkNodesMap();
-
             for(String currTopic : sinkTopics.keySet()) {
                 if(topologySourceTopicsMap.get(currTopic) != null) {
                     Map<String, Set<Integer>> linkMap = subtopologyLinkMap.get(currSub.id());
@@ -1945,9 +1951,16 @@ public class InternalTopologyBuilder {
                     if(linkMap == null) {
                         subtopologyLinkMap.put(currSub.id(), new HashMap<>());
                     }
-                    subtopologyLinkMap.get(currSub.id).put(currTopic, topologySourceTopicsMap.get(currTopic));
+                    Set<Integer> subLinkedTopologies = topologySourceTopicsMap.get(currTopic);
+                    subtopologyLinkMap.get(currSub.id()).put(currTopic, subLinkedTopologies);
+                    notLinkedTopologies.removeAll(subLinkedTopologies);
+                    notLinkedTopologies.remove(currSub.id());
                 }
             }
+        }
+
+        for(Integer notLinkedID : notLinkedTopologies){
+            subtopologyLinkMap.put(notLinkedID, null);
         }
 
 //        System.out.println(subtopologyLinkMap.toString());
@@ -1985,6 +1998,7 @@ public class InternalTopologyBuilder {
         Map<Integer, TopologyDescription.Subtopology> subtopologyIDMap = new HashMap<>();
         Set<String> serialization = new HashSet<>();
         Iterator<TopologyDescription.Subtopology> it = topDesc.subtopologies.iterator();
+
         while (it.hasNext()) {
             TopologyDescription.Subtopology currSubTop = it.next();
             subtopologyIDMap.put(currSubTop.id(), currSubTop);
