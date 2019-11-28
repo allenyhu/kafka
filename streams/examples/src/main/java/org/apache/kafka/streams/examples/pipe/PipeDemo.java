@@ -23,6 +23,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 
@@ -51,7 +53,15 @@ public class PipeDemo {
 
         final StreamsBuilder builder = new StreamsBuilder();
 
-        builder.stream("streams-plaintext-input").to("streams-pipe-output");
+        List<String> topics =  new ArrayList<>();
+        topics.add("streams-plaintext-input");
+//        topics.add("TESTTOPIC1");
+//        topics.add("TESTTOPIC2");
+//        topics.add("TESTTOPIC3");
+//        topics.add("TESTTOPIC4");
+//        topics.add("TESTTOPIC5");
+
+        builder.stream(topics).to("streams-pipe-output");
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         final CountDownLatch latch = new CountDownLatch(1);

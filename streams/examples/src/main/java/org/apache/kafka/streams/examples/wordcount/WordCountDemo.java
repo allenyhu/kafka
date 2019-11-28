@@ -29,9 +29,8 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Properties;
+import javax.sound.midi.SysexMessage;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -51,6 +50,7 @@ public final class WordCountDemo {
     public static final String INPUT_TOPIC = "streams-plaintext-input";
     public static final String OUTPUT_TOPIC = "streams-wordcount-output";
 
+
     static Properties getStreamsConfig() {
         final Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount");
@@ -58,7 +58,6 @@ public final class WordCountDemo {
         props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-//        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.Long().getClass().getName());
 
 
         // setting offset reset to earliest so that we can re-run the demo code with the same pre-loaded data
@@ -69,25 +68,33 @@ public final class WordCountDemo {
     }
 
     static void createWordCountStream(final StreamsBuilder builder) {
-//        builder.build().addSource("ISNAME", INPUT_TOPIC);
+        List<String> topics =  new ArrayList<>();
+        topics.add(INPUT_TOPIC);
 
-        final KStream<String, String> source = builder.stream(INPUT_TOPIC);
+        final KStream<String, String> source = builder.stream(topics);
         final KTable<String, Long> counts = source
             .flatMapValues(value -> Arrays.asList(value.toLowerCase(Locale.getDefault()).split(" ")))
             .groupBy((key, value) -> value)
             .count();
 
-//        final String queryableStoreName = counts.queryableStoreName(); // returns null if KTable is not queryable
-//        ReadOnlyKeyValueStore view = counts.toStream().store(queryableStoreName, QueryableStoreTypes.keyValueStore());
-//        for (String key : counts.)
-//        System.out.println(counts.print());
+        counts.filter((key, value) -> value > 1).toStream().to(OUTPUT_TOPIC);
 
-        // need to override value serde to Long type
         counts.toStream().to(OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.Long()));
-        counts.toStream().to("NEW TOPIC");
+    }
 
-//        counts.toStream().to(OUTPUT_TOPIC);
-//
+    static void createWordCountStream2(final StreamsBuilder builder) {
+        List<String> topics =  new ArrayList<>();
+        topics.add(INPUT_TOPIC);
+
+        final KStream<String, String> source = builder.stream(topics);
+        final KTable<String, Long> counts = source
+                .flatMapValues(value -> Arrays.asList(value.toLowerCase(Locale.getDefault()).split(" ")))
+                .groupBy((key, value) -> value)
+                .count();
+
+        counts.filter((key, value) -> value > 1).toStream().to(OUTPUT_TOPIC);
+
+//        counts.toStream().to(OUTPUT_TOPIC, Produced.with(Serdes.String(), Serdes.Long()));
     }
 
     public static void main(final String[] args) {
@@ -97,11 +104,19 @@ public final class WordCountDemo {
         createWordCountStream(builder);
         Topology t = builder.build();
         final KafkaStreams streams = new KafkaStreams(t, props);
+
+        final StreamsBuilder builder2 = new StreamsBuilder();
+        createWordCountStream2(builder2);
+        Topology tt = builder2.build();
+        final KafkaStreams stream2 = new KafkaStreams(tt, props);
+
         final CountDownLatch latch = new CountDownLatch(1);
 
         System.out.println(t.describe());
-        System.out.println(t.serialize().toString());
-        System.out.println(t.isIsomorphic(t));
+
+        System.out.println(tt.describe());
+
+        System.out.println(t.isIsomorphic(tt));
 
 
         // attach shutdown handler to catch control-c
@@ -109,6 +124,7 @@ public final class WordCountDemo {
             @Override
             public void run() {
                 streams.close();
+//                testStream.close();
                 latch.countDown();
             }
         });

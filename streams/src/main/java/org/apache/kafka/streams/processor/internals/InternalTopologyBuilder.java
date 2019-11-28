@@ -1932,7 +1932,7 @@ public class InternalTopologyBuilder {
         HashMap<Integer, Map<String, Set<Integer>>> subtopologyLinkMap = new HashMap<>();
 
         // TODO: remove
-        //System.out.println(topologySourceTopicsMap.toString());
+//        System.out.println(topologySourceTopicsMap.toString());
 
         Iterator<TopologyDescription.Subtopology> iterator = all.iterator();
         while(iterator.hasNext()) {
@@ -2024,7 +2024,7 @@ public class InternalTopologyBuilder {
         }
 
         // TODO: remove
-        System.out.println(linkedTops.toString());
+//        System.out.println(linkedTops.toString());
 
         return serialization;
     }
@@ -2037,41 +2037,43 @@ public class InternalTopologyBuilder {
         Map<String, Set<Integer>> childrenTops = linkedTop.get(topologyID);
 
         if(childrenTops == null){
-            return traverseInternalTopology(((Subtopology) topology).sourceNode(), "", false);
+//            System.out.println(traverseInternalTopology(((Subtopology) topology).sourceNode(), new HashMap<>()));
+            return traverseInternalTopology(((Subtopology) topology).sourceNode(), new HashMap<String,String>());
         }
 
-        String allChildSerialization = "";
+        Map<String, String> allChildSerialization = new HashMap();
         for(Map.Entry<String, Set<Integer>> child : childrenTops.entrySet()){
             for(Integer id : child.getValue()){
-                allChildSerialization += traverseTopology(id, linkedTop, idToSub);
+                allChildSerialization.put(child.getKey(), traverseTopology(id, linkedTop, idToSub));
             }
         }
 
-        String internalSerialization = traverseInternalTopology(((Subtopology) topology).sourceNode(), allChildSerialization,true);
+        String internalSerialization = traverseInternalTopology(((Subtopology) topology).sourceNode(), allChildSerialization);
 
         // TODO: remove
-        System.out.println("Internal: " + internalSerialization);
-        System.out.println("Child: " + allChildSerialization);
+//        System.out.println("Internal: " + internalSerialization);
+//        System.out.println("Child: " + allChildSerialization);
 
         return internalSerialization;
     }
 
     private String traverseInternalTopology(TopologyDescription.Node node,
-                                            String childSerialization,
-                                            boolean isLinked) {
-        if(node.successors().isEmpty()) {
-            if (isLinked) {
-                return childSerialization;
-            }
+                                            Map<String,String> childSerialization) {
 
-            return "0" + childSerialization + "1";
+        if(node instanceof TopologyDescription.Sink) {
+            String currChildSerialization = childSerialization.get(((TopologyDescription.Sink) node).topic());
+
+            if (currChildSerialization != null) {
+                return currChildSerialization;
+            }
+            return "01";
         }
 
         String serialization = "";
         Iterator<TopologyDescription.Node> it = node.successors().iterator();
         while (it.hasNext()) {
             TopologyDescription.Node child = it.next();
-            serialization += traverseInternalTopology(child, childSerialization, isLinked);
+            serialization += traverseInternalTopology(child, childSerialization);
         }
         return "0" + serialization + "1";
     }
@@ -2081,8 +2083,8 @@ public class InternalTopologyBuilder {
         Map<String, String> otherSerialization = otherTopology.serialize();
 
         // TODO: remove
-        System.out.println(serialization.toString());
-        System.out.println(otherSerialization.toString());
+//        System.out.println(serialization.toString());
+//        System.out.println(otherSerialization.toString());
 
         // TODO: check if can do in place
         Map<String, String> sortedSer = new HashMap<>();
@@ -2100,8 +2102,8 @@ public class InternalTopologyBuilder {
         }
 
         // TODO: remove
-        System.out.println(sortedSer.toString());
-        System.out.println(sortedOtherSer.toString());
+//        System.out.println(sortedSer.toString());
+//        System.out.println(sortedOtherSer.toString());
 
         return sortedSer.equals(sortedOtherSer);
     }
